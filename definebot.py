@@ -21,7 +21,7 @@ try:
 except Exception as e:
 	print("Error creating API")
 	raise e
-my_handle = api.me().screen_name
+# my_handle = api.me.screen_name
 
 def get_definitions(word):
 	#Given a word, utilize Python and BS4 to get the definition from MW online.
@@ -82,7 +82,7 @@ def parse_mention(text):
 
 	#TODO: Is there an easier way of parsing natural language in Python?
 	text = text.lower()
-	text = text.replace(f'@{my_handle}','')
+	text = text.replace(f'@Hooper_Labs','')
 	text = text.replace(':','').replace('?','')
 	text = text.replace('definition of','definition_of',1).replace('meaning of','meaning_of',1)
 	text = text.replace('this word mean','this_word_mean').replace('this mean','this_mean')
