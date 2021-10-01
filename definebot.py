@@ -28,7 +28,6 @@ def get_definitions(word):
 	#Returns the response to the tweet
 	if word == 'life' or word == 'universe' or word == 'everything':
 		return '42'
-	if 
 	url = f'https://www.merriam-webster.com/dictionary/{word}'
 	#Make web request
 	response = requests.get(url)
