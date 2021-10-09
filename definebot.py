@@ -192,6 +192,7 @@ def proactive_search():
 
 	#Find Bearer Token
 	#obfuscate URL for reasons
+	#TODO - get this URL dynamically from sw.js as the hash may change in the future.
 	auth_token_url = "https://ab" + "s.tw" + "\x69mg.com/re" + "spon" + "s\x69ve-w" + "eb/cl" + "ient" + "-web/ma\x69n.ae" + "8116d5.js"
 	print(f"Requesting {auth_token_url}")
 	response =  requests.get(auth_token_url,verify=False,headers=headers)# requests.get(auth_token_url,verify=False,headers=headers,proxies=proxies)
@@ -207,8 +208,7 @@ def proactive_search():
 					print(f"Bearer Token: {bearer}")
 	if bearer == "":
 		print(f"Bearer Token not found")
-		sys.exit(1)
-
+		return ""
 	#Get Guest Token
 	#obfuscate URL for reasons
 	guest_token_url = "https://ap" + "i.t" + "w\x69t" + "ter.c" + "om/1.1/g" + "uest/a" + "ctivat" + "e.json"
