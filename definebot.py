@@ -1,6 +1,6 @@
 from keys import keys
 from bs4 import BeautifulSoup
-import random, time, re, requests, tweepy, twint, datetime, warnings
+import random, time, re, requests, tweepy, datetime, warnings
 warnings.filterwarnings("ignore")
 #Twitter Bot to respond to tweets with the dictionary definition of a word.
 #10/9/21 added helpful mode to search for people explicitly asking for 
