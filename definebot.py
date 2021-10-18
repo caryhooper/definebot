@@ -86,8 +86,9 @@ def parse_mention(text):
 	#TODO: Is there an easier way of parsing natural language in Python?
 	#TODO: if the target word is surrounded by quotes, look up the whole phrase
 	text = text.lower()
-	text = text.replace(f'@Hooper_Labs','')
-	text = text.replace(':','').replace('?','').replace("'",'').replace('"','')
+	removewords = [':','@Hooper_Labs','"','\'',',','.',':','?']
+	for word in removewords:
+		text = text.replace(word,'')
 	text = text.replace('definition of','definition_of',1).replace('meaning of','meaning_of',1).replace('the word','')
 	text = text.replace('this word mean','this_word_mean').replace('this mean','this_mean')
 	text_array_with_links = text.split(' ')
