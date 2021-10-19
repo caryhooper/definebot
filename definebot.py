@@ -136,6 +136,10 @@ def parse_mention(text):
 def reply_def(original_id,reply):
 	#Try to reply to the tweet ID
 	try:
+		#First try to like the post
+		api.create_favorite(original_id)
+		random_sleep(20,120)
+		#Then reply to the post
 		new_status = api.update_status(status = reply, in_reply_to_status_id = original_id , auto_populate_reply_metadata=True)
 		new_status_id = new_status.id_str
 		print(f"Successfully created status with ID {new_status_id}\n: {new_status.text}")
