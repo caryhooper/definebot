@@ -142,7 +142,7 @@ def reply_def(original_id,reply):
 	try:
 		#First try to like the post
 		api.create_favorite(original_id)
-		random_sleep(20,120)
+		random_sleep(0,2)
 	except Exception as e:
 		print(e)
 		print(f'Failed to favorite {original_id}')
