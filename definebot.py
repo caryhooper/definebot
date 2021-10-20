@@ -143,6 +143,10 @@ def reply_def(original_id,reply):
 		#First try to like the post
 		api.create_favorite(original_id)
 		random_sleep(20,120)
+	except Exception as e:
+		print(e)
+		print(f'Failed to favorite {original_id}')
+	try:
 		#Then reply to the post
 		new_status = api.update_status(status = reply, in_reply_to_status_id = original_id , auto_populate_reply_metadata=True)
 		new_status_id = new_status.id_str
