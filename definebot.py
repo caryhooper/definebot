@@ -52,6 +52,10 @@ def get_definitions(word):
 	#Returns the response to the tweet
 	if word == 'life' or word == 'universe' or word == 'everything':
 		return '42'
+	if word == 'mitochondria' or word == 'mitochondrion':
+		return 'The powerhouse of the cell.'
+	if word == 'winning':
+		return 'https://en.wikipedia.org/wiki/Charlie_Sheen'
 	url = f'https://www.merriam-webster.com/dictionary/{word}'
 	#Make web request
 	response = requests.get(url)
