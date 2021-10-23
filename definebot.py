@@ -153,9 +153,11 @@ def reply_def(original_id,reply):
 		new_status = api.update_status(status = reply, in_reply_to_status_id = original_id , auto_populate_reply_metadata=True)
 		new_status_id = new_status.id_str
 		print(f"Successfully created status with ID {new_status_id}\n: {new_status.text}")
+		return True
 	except Exception as e:
 		print(e)
 		print(f'Failed to reply to {original_id}')
+		return False
 
 def find_unprocessed_tweets():
 	#Get the last ID that was responded to
@@ -257,10 +259,10 @@ def proactive_search():
 		keyword = parse_mention(tweet_text)
 		if keyword != "":
 			definition = get_definitions(keyword)
-			reply_def(tweet_id,definition)
-			#Sleep 24 hrs to rate limit this functionality
-			random_sleep(1440,1880)
-			return ""
+			if reply_def(tweet_id,definition):
+				#Sleep 24 hrs to rate limit this functionality
+				random_sleep(1440,1880)
+				return ""
 	return ""
 
 # print(api.me())
