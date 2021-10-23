@@ -148,6 +148,7 @@ def reply_def(original_id,reply):
 	except Exception as e:
 		print(e)
 		print(f'Failed to favorite {original_id}')
+		return False
 	try:
 		#Then reply to the post
 		new_status = api.update_status(status = reply, in_reply_to_status_id = original_id , auto_populate_reply_metadata=True)
