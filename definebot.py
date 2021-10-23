@@ -56,6 +56,8 @@ def get_definitions(word):
 		return 'The powerhouse of the cell.'
 	if word == 'winning':
 		return 'https://en.wikipedia.org/wiki/Charlie_Sheen'
+	if word == 'scrub' or word == 'scrubs':
+		return 'A scrub is a guy that can\'t get no love from me.\nHangin\' out the passenger side of his best friend\'s ride\nTrying to holla at me\nI don\'t want no scrub'
 	url = f'https://www.merriam-webster.com/dictionary/{word}'
 	#Make web request
 	response = requests.get(url)
