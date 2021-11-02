@@ -263,7 +263,7 @@ def proactive_search(headers):
 	all_messages = response.json()["globalObjects"]["twe" + "ets"]
 	message_ids = all_messages.keys()
 	for message_id in message_ids:
-		message_text = message_ids[message_id]["text"]
+		message_text = all_messages[message_id]["text"]
 		print(f"Message ID {message_id}: {message_text}")
 		keyword = parse_mention(message_text)
 		if keyword != "":
@@ -285,11 +285,13 @@ def find_friends(headers):
 	search_url += f'?q=%23{hashtag}%20s\x69nce:{date}&q' + 'uery_s' + 'our' + 'ce=ty' + 'ped_query&p' + 'c=1&c'
 	search_url += 'ount' + '=10'
 
-	proxies = {'http':'http://127.0.0.1:8080','https':'http://127.0.0.1:8080'}
-
-	response = requests.get(search_url,verify=False,headers=headers, proxies=proxies)
+	#proxies = {'http':'http://127.0.0.1:8080','https':'http://127.0.0.1:8080'}
+	#Find people using the hashtag
+	#response = requests.get(search_url,verify=False,headers=headers, proxies=proxies)
+	response = requests.get(search_url,verify=False,headers=headers)
 	try:
 		users = response.json()['globalObjects']['tweets'].keys()
+		#Determine how social definebot is feeling
 		friends = random.randint(0,len(users))
 		new_friend_messages = random.sample(users,friends)
 
@@ -300,10 +302,12 @@ def find_friends(headers):
 
 	for message_id in new_friend_messages:
 		try:
-			random_sleep(0,1)
+			random_sleep(0,3)
 			message = api.get_status(message_id)
+			#Find the username of the status
 			username = message.user.screen_name
-			api.create_friendship(username)
+			#Make a new friend
+			api.create_friendship(screen_name=username)
 			print(f"Made a new friend with {username}.")
 		except Exception as e:
 			print(f"Error creating friendship with {username} (message ID {message_id}): {e}")
@@ -316,7 +320,7 @@ def find_friends(headers):
 while True:
 	if not reply_messages():
 		headers = manual_login()
-		proactive_search(headers)
 		find_friends(headers)
+		proactive_search(headers)
 	random_sleep(180,900)
 
