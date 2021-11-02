@@ -1,8 +1,7 @@
 from keys import keys
-from bs4 import BeautifulSoup
-import random, time, re, requests, tweepy, datetime, warnings
+import random, time, re, requests, tweepy, datetime, warnings, os, bs4
 warnings.filterwarnings("ignore")
-#Twitter Bot to respond to tweets with the dictionary definition of a word.
+#Bot to respond to messages with the dictionary definition of a word.
 #10/9/21 added helpful mode to search for people explicitly asking for 
 #    the definition of a word and replying to them.
 #Example. @Hooper_Labs define flabbergast
@@ -12,7 +11,7 @@ CONSUMER_SECRET = keys['consumer_secret']
 ACCESS_TOKEN = keys['access_token']
 ACCESS_TOKEN_SECRET = keys['access_token_secret']
 
-# Authenticate to Twitter
+# Authenticate
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
@@ -25,21 +24,21 @@ except Exception as e:
 	print("Error creating API")
 	raise e
 
-def save_last_id(tweet_id):
-	#Save most recent tweet ID in a file
-	results_file = open('.last_tweet','w')
-	results_file.write(tweet_id)
+def save_last_id(message_id):
+	#Save most recent message ID in a file
+	results_file = open('.last_message','w')
+	results_file.write(message_id)
 	results_file.close()
 
 def get_last_id():
-	#Retrieve most recent tweet ID from a file
+	#Retrieve most recent message ID from a file
 	try:
-		results_file = open('.last_tweet','r')
+		results_file = open('.last_message','r')
 	except:
 		return '0000000000000000000'
-	tweet_id = results_file.read()
+	message_id = results_file.read()
 	results_file.close()
-	return tweet_id
+	return message_id
 
 def random_sleep(min_minutes,max_minutes):
 	#Sleep a random number of minutes within a range (random + jitter)
@@ -49,7 +48,7 @@ def random_sleep(min_minutes,max_minutes):
 
 def get_definitions(word):
 	#Given a word, utilize Python and BS4 to get the definition from MW online.
-	#Returns the response to the tweet
+	#Returns the response to the message
 	if word == 'life' or word == 'universe' or word == 'everything':
 		return '42'
 	if word == 'mitochondria' or word == 'mitochondrion':
@@ -61,7 +60,7 @@ def get_definitions(word):
 	url = f'https://www.merriam-webster.com/dictionary/{word}'
 	#Make web request
 	response = requests.get(url)
-	soup = BeautifulSoup(response.text, 'html.parser')
+	soup = bs4.BeautifulSoup(response.text, 'html.parser')
 	#Parse with BS4
 	if soup.find('p',{'class':'missing-query'}):
 		print(f"Definition not found for {word}.  Check your spelling and try again!")
@@ -140,7 +139,7 @@ def parse_mention(text):
 	return ''
 
 def reply_def(original_id,reply):
-	#Try to reply to the tweet ID
+	#Try to reply to the message ID
 	try:
 		#First try to like the post
 		api.create_favorite(original_id)
@@ -162,7 +161,7 @@ def reply_def(original_id,reply):
 		print(f'Failed to reply to {original_id}')
 		return False
 
-def find_unprocessed_tweets():
+def find_unprocessed_messages():
 	#Get the last ID that was responded to
 	last_id = get_last_id()
 	#Retrieve all @ mentions
@@ -173,7 +172,7 @@ def find_unprocessed_tweets():
 	for mention in mentions:
 		print(f"{mention.id_str}: {mention.text}")
 
-	#If the last response is in the last 1000 @ tweets, slice all mentions to include only the latest
+	#If the last response is in the last 1000 @ messages, slice all mentions to include only the latest
 	if last_id in mention_ids:
 		last_index = mention_ids.index(last_id)
 		mention_slice = mentions[:last_index-1]
@@ -181,10 +180,10 @@ def find_unprocessed_tweets():
 		mention_slice = mentions
 	return mentions
 
-def reply_tweets():
-	#Gather all "mentions", which are Twitter status objects
-	#returns false if there are no tweets to be replied to, true if there are '@s'
-	mentions = find_unprocessed_tweets()
+def reply_messages():
+	#Gather all "mentions", which are status objects
+	#returns false if there are no messages to be replied to, true if there are '@s'
+	mentions = find_unprocessed_messages()
 
 	#If there are none, end here
 	if len(mentions) == 0:
@@ -206,9 +205,9 @@ def reply_tweets():
 		random_sleep(5,120)
 	return True
 
-def proactive_search():
+def manual_login():
 	headers = {"User-Agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0"}
-	#proxies = {'http':'http://127.0.0.1:8080','https':'http://127.0.0.1:8080'}
+	proxies = {'http':'http://127.0.0.1:8080','https':'http://127.0.0.1:8080'}
 
 	#Find Bearer Token
 	#obfuscate URL for reasons
@@ -242,31 +241,72 @@ def proactive_search():
 		print(response.text)
 	print(f"Guest Token: {guest_token}")
 
-	#Get Search Tweets
+	#Get Search 
 	headers["X-G" + "ues" + "t-T" + "ok" + "en"] = guest_token
+	return headers
+
+def get_date():
 	today = datetime.date.today()
 	weekago = today - datetime.timedelta(days=7)
 	year = weekago.year
 	month = weekago.month
 	day = weekago.day
+	return f"{year}-{month}-{day}"
+
+def proactive_search(headers):
+	date = get_date()
 
 	#obfuscate URL for reasons
 	search_url = 	f"https://t" + "w\x69" + "tte" + "r.com/" + "i/ap" + "i/2/s" + "earch/a" + "dapt\x69v" + "e.json?"
-	search_url += 	f"q=\"What%20is%20the%20definition%20of\"%20since:{year}-{month}-{day}&count=5"
+	search_url += 	f"q=\"What%20is%20the%20definition%20of\"%20since:{date}&count=5"
 	response = requests.get(search_url,verify=False,headers=headers)#requests.get(search_url,verify=False,headers=headers,proxies=proxies)
-	tweets = response.json()["globalObjects"]["tweets"]
-	tweet_ids = tweets.keys()
-	for tweet_id in tweet_ids:
-		tweet_text = tweets[tweet_id]["text"]
-		print(f"Tweet ID {tweet_id}: {tweet_text}")
-		keyword = parse_mention(tweet_text)
+	all_messages = response.json()["globalObjects"]["twe" + "ets"]
+	message_ids = all_messages.keys()
+	for message_id in message_ids:
+		message_text = message_ids[message_id]["text"]
+		print(f"Message ID {message_id}: {message_text}")
+		keyword = parse_mention(message_text)
 		if keyword != "":
 			definition = get_definitions(keyword)
-			if reply_def(tweet_id,definition):
+			if reply_def(message_id,definition):
 				#Sleep 24 hrs to rate limit this functionality
 				random_sleep(1440,1880)
 				return ""
 	return ""
+
+def find_friends(headers):
+	#Read hashtag
+	if os.path.exists(".hashtag"):
+		hashtag = open('.hashtag','r').read().strip().strip('#')
+	else:
+		return ""
+	date = get_date()
+	search_url = 'https://t' + 'w\x69' + 'tte' + 'r.com/' + '\x69/ap\x69' + '/2/s' + 'earch' + '/adap' + 't\x69ve' + '.json'
+	search_url += f'?q=%23{hashtag}%20s\x69nce:{date}&q' + 'uery_s' + 'our' + 'ce=ty' + 'ped_query&p' + 'c=1&c'
+	search_url += 'ount' + '=10'
+
+	proxies = {'http':'http://127.0.0.1:8080','https':'http://127.0.0.1:8080'}
+
+	response = requests.get(search_url,verify=False,headers=headers, proxies=proxies)
+	try:
+		users = response.json()['globalObjects']['tweets'].keys()
+		friends = random.randint(0,len(users))
+		new_friend_messages = random.sample(users,friends)
+
+		print(f"Found {len(users)} potential friends.  Making {friends} new friends: {new_friend_messages}")
+	except Exception as e:
+		print(f"Error making new friends: {e}")
+		return ""
+
+	for message_id in new_friend_messages:
+		try:
+			random_sleep(0,1)
+			message = api.get_status(message_id)
+			username = message.user.screen_name
+			api.create_friendship(username)
+			print(f"Made a new friend with {username}.")
+		except Exception as e:
+			print(f"Error creating friendship with {username} (message ID {message_id}): {e}")
 
 # print(api.me())
 # info = api.get_user('chumbawambafan')
@@ -274,6 +314,9 @@ def proactive_search():
 
 #While loop to continuously check for more '@' mentions
 while True:
-	if not reply_tweets():
-		proactive_search()
+	if not reply_messages():
+		headers = manual_login()
+		proactive_search(headers)
+		find_friends(headers)
 	random_sleep(180,900)
+
