@@ -1,5 +1,5 @@
 from keys import keys
-import random, time, re, requests, tweepy, datetime, warnings, os, bs4
+import random, datetime, time, re, requests, tweepy, datetime, warnings, os, bs4
 warnings.filterwarnings("ignore")
 #Bot to respond to messages with the dictionary definition of a word.
 #10/9/21 added helpful mode to search for people explicitly asking for 
@@ -15,13 +15,18 @@ ACCESS_TOKEN_SECRET = keys['access_token_secret']
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
+def log(message):
+	now = datetime.datetime.now()
+	now_string = now.strftime("%m/%d/%Y %H:%M:%S")
+	print(f{now_string}: {message})
+
 # Create API object
 api = tweepy.API(auth, wait_on_rate_limit=True)
 try:
 	api.verify_credentials()
-	print("Credentials Verified")
+	log("Credentials Verified")
 except Exception as e:
-	print("Error creating API")
+	log("Error creating API")
 	raise e
 
 def save_last_id(message_id):
@@ -43,7 +48,7 @@ def get_last_id():
 def random_sleep(min_minutes,max_minutes):
 	#Sleep a random number of minutes within a range (random + jitter)
 	sleep_seconds = random.randrange(min_minutes * 60,max_minutes * 60)
-	print(f"Sleeping {sleep_seconds} seconds.")
+	log(f"Sleeping {sleep_seconds} seconds.")
 	time.sleep(sleep_seconds)
 
 def get_definitions(word):
@@ -63,7 +68,7 @@ def get_definitions(word):
 	soup = bs4.BeautifulSoup(response.text, 'html.parser')
 	#Parse with BS4
 	if soup.find('p',{'class':'missing-query'}):
-		print(f"Definition not found for {word}.  Check your spelling and try again!")
+		log(f"Definition not found for {word}.  Check your spelling and try again!")
 		return ''
 	definitions = soup.findAll('span',{'class':'dtText'})
 	reply = f"{word}: \n"
@@ -79,7 +84,7 @@ def get_definitions(word):
 		if len(add_text) + len(reply) <= 280:
 			reply += add_text
 			count += 1
-	print(f"Reply ({len(reply)} chars): {reply}")
+	log(f"Reply ({len(reply)} chars): {reply}")
 	return reply
 
 def parse_mention(text):
@@ -91,7 +96,7 @@ def parse_mention(text):
 	#TODO: Is there an easier way of parsing natural language in Python?
 	#TODO: if the target word is surrounded by quotes, look up the whole phrase
 	text = text.lower()
-	removewords = [':','@Hooper_Labs','"','\'',',','.',':','?']
+	removewords = [':','@Hooper_Labs','"','\'',',','.',':','?','#']
 	for word in removewords:
 		text = text.replace(word,'')
 	text = text.replace('definition of','definition_of',1).replace('meaning of','meaning_of',1).replace('the word','')
@@ -143,22 +148,22 @@ def reply_def(original_id,reply):
 	try:
 		#First try to like the post
 		api.create_favorite(original_id)
-		print(f"Successfully favorited status with ID {original_id}\n")
+		log(f"Successfully favorited status with ID {original_id}\n")
 		random_sleep(0,2)
 
 	except Exception as e:
-		print(e)
-		print(f'Failed to favorite {original_id}')
+		log(e)
+		log(f'Failed to favorite {original_id}')
 		return False
 	try:
 		#Then reply to the post
 		new_status = api.update_status(status = reply, in_reply_to_status_id = original_id , auto_populate_reply_metadata=True)
 		new_status_id = new_status.id_str
-		print(f"Successfully created status with ID {new_status_id}\n: {new_status.text}")
+		log(f"Successfully created status with ID {new_status_id}\n: {new_status.text}")
 		return True
 	except Exception as e:
-		print(e)
-		print(f'Failed to reply to {original_id}')
+		log(e)
+		log(f'Failed to reply to {original_id}')
 		return False
 
 def find_unprocessed_messages():
@@ -168,9 +173,9 @@ def find_unprocessed_messages():
 	mentions = api.mentions_timeline(since_id=last_id,count=1000)
 	#Collect all mention IDs
 	mention_ids = [i.id_str for i in mentions]
-	print(f"Mention IDs: {mention_ids}")
+	log(f"Mention IDs: {mention_ids}")
 	for mention in mentions:
-		print(f"{mention.id_str}: {mention.text}")
+		log(f"{mention.id_str}: {mention.text}")
 
 	#If the last response is in the last 1000 @ messages, slice all mentions to include only the latest
 	if last_id in mention_ids:
@@ -191,7 +196,7 @@ def reply_messages():
 
 	#Immediately save the state (last ID).  If program ends prematurely, this will cause false negatives (no reply)
 	last_id = mentions[0].id_str
-	print(f"Saving last id: {last_id}")
+	log(f"Saving last id: {last_id}")
 	save_last_id(last_id)
 
 	#For each mention, parse the text, determine the dictionary word, get the definition, and reply
@@ -213,7 +218,7 @@ def manual_login():
 	#obfuscate URL for reasons
 	#TODO - get this URL dynamically from sw.js as the hash may change in the future.
 	auth_token_url = "https://ab" + "s.tw" + "\x69mg.com/re" + "spon" + "s\x69ve-w" + "eb/cl" + "ient" + "-web/ma\x69n.ae" + "8116d5.js"
-	print(f"Requesting {auth_token_url}")
+	log(f"Requesting {auth_token_url}")
 	response =  requests.get(auth_token_url,verify=False,headers=headers)# requests.get(auth_token_url,verify=False,headers=headers,proxies=proxies)
 	tokens = response.text.split(';')
 	bearer = ""
@@ -224,22 +229,22 @@ def manual_login():
 			for newtoken in newtokens:
 				if 's="' in newtoken:
 					bearer = newtoken.split('"')[1]
-					print(f"Bearer Token: {bearer}")
+					log(f"Bearer Token: {bearer}")
 	if bearer == "":
-		print(f"Bearer Token not found")
+		log(f"Bearer Token not found")
 		return ""
 	#Get Guest Token
 	#obfuscate URL for reasons
 	guest_token_url = "https://ap" + "i.t" + "w\x69t" + "ter.c" + "om/1.1/g" + "uest/a" + "ctivat" + "e.json"
-	print(f"Requesting {guest_token_url}")
+	log(f"Requesting {guest_token_url}")
 	headers["Authorization"] = f"Bearer {bearer}"
 	response = requests.post(guest_token_url,verify=False,headers=headers)#requests.post(guest_token_url,verify=False,headers=headers,proxies=proxies)
 	try:
 		guest_token = response.json()["guest_token"]
 	except:
-		print(response.json())
-		print(response.text)
-	print(f"Guest Token: {guest_token}")
+		log(response.json())
+		log(response.text)
+	log(f"Guest Token: {guest_token}")
 
 	#Get Search 
 	headers["X-G" + "ues" + "t-T" + "ok" + "en"] = guest_token
@@ -264,7 +269,7 @@ def proactive_search(headers):
 	message_ids = all_messages.keys()
 	for message_id in message_ids:
 		message_text = all_messages[message_id]["text"]
-		print(f"Message ID {message_id}: {message_text}")
+		log(f"Message ID {message_id}: {message_text}")
 		keyword = parse_mention(message_text)
 		if keyword != "":
 			definition = get_definitions(keyword)
@@ -295,9 +300,9 @@ def find_friends(headers):
 		friends = random.randint(0,len(users))
 		new_friend_messages = random.sample(users,friends)
 
-		print(f"Found {len(users)} potential friends.  Making {friends} new friends: {new_friend_messages}")
+		log(f"Found {len(users)} potential friends.  Making {friends} new friends: {new_friend_messages}")
 	except Exception as e:
-		print(f"Error making new friends: {e}")
+		log(f"Error making new friends: {e}")
 		return ""
 
 	for message_id in new_friend_messages:
@@ -308,11 +313,11 @@ def find_friends(headers):
 			username = message.user.screen_name
 			#Make a new friend
 			api.create_friendship(screen_name=username)
-			print(f"Made a new friend with {username}.")
+			log(f"Made a new friend with {username}.")
 		except Exception as e:
-			print(f"Error creating friendship with {username} (message ID {message_id}): {e}")
+			log(f"Error creating friendship with {username} (message ID {message_id}): {e}")
 
-# print(api.me())
+# log(api.me())
 # info = api.get_user('chumbawambafan')
 # home = api.home_timeline()
 

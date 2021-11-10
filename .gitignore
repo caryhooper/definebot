@@ -128,5 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 keys.py
-.last_tweet
+.last_message
 .hashtag
