@@ -18,7 +18,7 @@ auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 def log(message):
 	now = datetime.datetime.now()
 	now_string = now.strftime("%m/%d/%Y %H:%M:%S")
-	print(f{now_string}: {message})
+	print(f"{now_string}: {message}")
 
 # Create API object
 api = tweepy.API(auth, wait_on_rate_limit=True)
