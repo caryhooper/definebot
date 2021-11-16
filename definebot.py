@@ -202,7 +202,7 @@ def reply_messages():
 	#For each mention, parse the text, determine the dictionary word, get the definition, and reply
 	for mention in mentions:
 		defined_word = parse_mention(mention.text)
-		if defined_word != '':
+		if defined_word != '' and defined_word.isascii():
 			definition = get_definitions(defined_word)
 			if definition != '':
 				reply_def(mention.id_str,definition)
