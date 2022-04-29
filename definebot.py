@@ -271,6 +271,10 @@ def proactive_search(headers):
 		message_text = all_messages[message_id]["text"]
 		log(f"Message ID {message_id}: {message_text}")
 		keyword = parse_mention(message_text)
+		#Adding logging here for debugging later...
+		with open('/opt/definebot/my.log','a') as f:
+			f.write(f'{message_id}----{message_text}----{keyword}\n')
+
 		if keyword != "":
 			definition = get_definitions(keyword)
 			if reply_def(message_id,definition):
