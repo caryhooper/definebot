@@ -331,5 +331,5 @@ while True:
 		headers = manual_login()
 		find_friends(headers)
 		proactive_search(headers)
-	random_sleep(180,900)
+	random_sleep(120,600)
 
